@@ -10,53 +10,33 @@ export default async function MemoriesPage() {
   const rows = (data ?? []) as any[]
 
   return (
-    <div className="p-3 sm:p-5 md:p-8 max-w-5xl mx-auto pb-24">
-      <div className="mb-5 sm:mb-7">
-        <p className="text-[9.5px] font-extrabold tracking-widest text-[#D4AF5A] uppercase mb-1">
-          BÓVEDA DE RECUERDOS
-        </p>
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-[#F7EFE4] tracking-tight">
-          Recuerdos
-        </h1>
-        <p className="text-xs text-[#A89186] mt-0.5">
-          {rows.length} recuerdos compartidos
-        </p>
+    <div style={{ padding: '32px 32px 80px', maxWidth: 1000 }}>
+      <div style={{ marginBottom: 28 }}>
+        <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: '#D4AF5A', marginBottom: 4 }}>NOTAS DE AMOR</p>
+        <h1 style={{ fontSize: 24, fontWeight: 900, color: '#F7EFE4' }}>Recuerdos</h1>
+        <p style={{ fontSize: 12, color: '#A89186', marginTop: 3 }}>{rows.length} recuerdos</p>
       </div>
-
-      {rows.length === 0 ? (
-        <div className="bg-[#2A080D] rounded-2xl p-8 sm:p-14 text-center border border-[#D4AF5A]/20">
-          <p className="text-4xl mb-3">✦</p>
-          <p className="text-base font-bold text-[#EFE5D8]">No hay recuerdos registrados</p>
-          <p className="text-xs text-[#A89186] mt-1">Las notas y recuerdos guardados se verán aquí.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          {rows.map(m => (
-            <div
-              key={m.id}
-              className="bg-[#2A080D] border border-[#D4AF5A]/20 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm"
-            >
-              <div>
-                <div className="flex justify-between items-center gap-2 mb-2">
-                  <span className="text-[10px] font-extrabold text-[#D4AF5A] uppercase tracking-wider truncate">
-                    {m.couples?.couple_names ?? '—'}
-                  </span>
-                  <span className="text-[10px] text-[#A89186] shrink-0">{m.date_str}</span>
-                </div>
-                <h3 className="text-sm sm:text-base font-extrabold text-[#F7EFE4] mb-1.5 leading-snug">
-                  {m.title}
-                </h3>
-                <p className="text-xs text-[#C7B7A3] leading-relaxed break-words">
-                  {m.content}
-                </p>
-              </div>
-              <p className="text-[10px] text-[#A89186] font-semibold mt-4 pt-2 border-t border-[#D4AF5A]/10">
-                ✦ {m.author}
-              </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+        {rows.length === 0 ? (
+          <p style={{ color: '#A89186' }}>No hay recuerdos.</p>
+        ) : rows.map(m => (
+          <div key={m.id} style={{
+            backgroundColor: '#2A080D',
+            border: '1px solid rgba(212,175,90,0.2)',
+            borderRadius: 16, padding: '18px 20px',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#D4AF5A', letterSpacing: 1 }}>
+                {m.couples?.couple_names ?? '—'}
+              </span>
+              <span style={{ fontSize: 10, color: '#6D2932' }}>{m.date_str}</span>
             </div>
-          ))}
-        </div>
-      )}
+            <h3 style={{ fontSize: 14, fontWeight: 800, color: '#F7EFE4', marginBottom: 6 }}>{m.title}</h3>
+            <p style={{ fontSize: 12, color: '#C7B7A3', lineHeight: 1.6 }}>{m.content}</p>
+            <p style={{ fontSize: 10, color: '#A89186', marginTop: 10 }}>✦ {m.author}</p>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

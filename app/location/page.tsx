@@ -1,14 +1,15 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { supabase, LocationLog, getLatestLocations, Couple, getAllCouples } from '@/lib/supabase'
+import { getLatestLocations, getAllCouples, supabase, type LocationLog, type Couple } from '@/lib/supabase'
 
 export default function LocationPage() {
   const [locations, setLocations] = useState<LocationLog[]>([])
   const [couples, setCouples] = useState<Couple[]>([])
-  const [coupleId, setCoupleId] = useState('')
   const [loading, setLoading] = useState(true)
+  const [coupleId, setCoupleId] = useState('')
   const [selectedLoc, setSelectedLoc] = useState<LocationLog | null>(null)
+
   const [session, setSession] = useState<{
     isAdmin: boolean
     coupleId: string | null
@@ -16,36 +17,31 @@ export default function LocationPage() {
     coupleName: string
   } | null>(null)
 
-  // Cargar sesión del usuario
   useEffect(() => {
     fetch('/api/auth/me')
-      .then(r => r.json())
-      .then(d => {
-        if (d.session) {
-          setSession(d.session)
-          if (!d.session.isAdmin && d.session.coupleId) {
-            setCoupleId(d.session.coupleId)
+      .then(res => res.json())
+      .then(data => {
+        if (data.session) {
+          setSession(data.session)
+          if (!data.session.isAdmin && data.session.coupleId) {
+            setCoupleId(data.session.coupleId)
           }
         }
       })
-      .catch(() => {})
   }, [])
 
-  // Cargar lista de parejas solo si es administrador
   useEffect(() => {
     if (session?.isAdmin) {
-      getAllCouples().then(setCouples).catch(() => {})
+      getAllCouples().then(setCouples)
     }
   }, [session])
 
-  // Cargar ubicaciones
   const loadLocations = useCallback(async () => {
+    if (!session) return
     setLoading(true)
+    const targetCouple = session.isAdmin ? coupleId : (session.coupleId || '')
     try {
-      const data = await getLatestLocations({
-        coupleId: coupleId || undefined,
-        limit: 50,
-      })
+      const data = await getLatestLocations({ coupleId: targetCouple || undefined, limit: 50 })
       setLocations(data)
       if (data.length > 0 && !selectedLoc) {
         setSelectedLoc(data[0])
@@ -53,7 +49,7 @@ export default function LocationPage() {
     } finally {
       setLoading(false)
     }
-  }, [coupleId, selectedLoc])
+  }, [session, coupleId, selectedLoc])
 
   useEffect(() => {
     if (session) {
@@ -61,31 +57,27 @@ export default function LocationPage() {
     }
   }, [session, loadLocations])
 
-  // Suscribirse a cambios en tiempo real
+  // Suscripción Realtime para nuevas ubicaciones
   useEffect(() => {
     if (!session) return
 
-    const channelName = session.isAdmin
-      ? 'admin_location_live'
-      : `couple_location_live_${session.coupleId}`
-
     const channel = supabase
-      .channel(channelName)
+      .channel('realtime_locations')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'location_logs',
-          ...(session.isAdmin ? {} : { filter: `couple_id=eq.${session.coupleId}` }),
+          ...(session.isAdmin ? {} : { filter: `couple_id=eq.${session.coupleId}` })
         },
-        payload => {
-          const newLoc = payload.new as LocationLog
-          if (session.isAdmin && coupleId && newLoc.couple_id !== coupleId) {
+        (payload: any) => {
+          const newRow = payload.new as LocationLog
+          if (session.isAdmin && coupleId && newRow.couple_id !== coupleId) {
             return
           }
-          setLocations(prev => [newLoc, ...prev].slice(0, 50))
-          setSelectedLoc(newLoc)
+          setLocations(prev => [newRow, ...prev].slice(0, 50))
+          setSelectedLoc(newRow)
         }
       )
       .subscribe()
@@ -108,27 +100,37 @@ export default function LocationPage() {
   const latest = selectedLoc || locations[0]
 
   return (
-    <div className="p-3 sm:p-5 md:p-8 max-w-7xl mx-auto pb-24">
+    <div style={{ padding: '32px 32px 80px', maxWidth: 1200 }}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 sm:mb-7">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
-          <p className="text-[9.5px] font-extrabold tracking-widest text-[#D4AF5A] uppercase mb-1">
+          <p style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: 2, color: '#D4AF5A', marginBottom: 4 }}>
             {session?.isAdmin ? 'GEOLOCALIZACIÓN EN TIEMPO REAL (ADMIN)' : `UBICACIÓN PRIVADA • ${session?.coupleName}`}
           </p>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-[#F7EFE4] tracking-tight">
+          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#F7EFE4' }}>
             Ubicación en Tiempo Real
           </h1>
-          <p className="text-xs text-[#A89186] mt-0.5">
+          <p style={{ fontSize: 12, color: '#A89186', marginTop: 3 }}>
             Rastreo satelital con actualización automática en vivo
           </p>
         </div>
 
-        <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center">
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           {session?.isAdmin && (
             <select
               value={coupleId}
               onChange={e => setCoupleId(e.target.value)}
-              className="flex-1 sm:flex-none bg-[#2A080D] border border-[#D4AF5A]/30 rounded-xl px-3 py-2 text-[#C7B7A3] text-xs sm:text-sm outline-none cursor-pointer min-w-0 sm:min-w-[180px]"
+              style={{
+                backgroundColor: '#2A080D',
+                border: '1px solid rgba(212,175,90,0.3)',
+                borderRadius: 10,
+                padding: '9px 14px',
+                color: '#C7B7A3',
+                fontSize: 13,
+                minWidth: 200,
+                outline: 'none',
+                cursor: 'pointer',
+              }}
             >
               <option value="">Todas las parejas</option>
               {couples.map(c => (
@@ -141,7 +143,16 @@ export default function LocationPage() {
 
           <button
             onClick={loadLocations}
-            className="w-full sm:w-auto bg-[#D4AF5A] text-[#190407] rounded-xl px-4 py-2 text-xs font-black hover:bg-[#F3E5AB] transition-colors shrink-0"
+            style={{
+              backgroundColor: '#D4AF5A',
+              color: '#190407',
+              border: 'none',
+              borderRadius: 10,
+              padding: '9px 18px',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+            }}
           >
             ↻ Actualizar
           </button>
@@ -149,75 +160,96 @@ export default function LocationPage() {
       </div>
 
       {loading && locations.length === 0 ? (
-        <div className="py-20 text-center text-xs sm:text-sm text-[#A89186]">
-          Buscando coordenadas GPS...
-        </div>
+        <div style={{ padding: 60, textAlign: 'center', color: '#A89186' }}>Buscando coordenadas GPS...</div>
       ) : locations.length === 0 ? (
-        <div className="bg-[#2A080D] rounded-2xl p-8 sm:p-14 text-center border border-[#D4AF5A]/20">
-          <p className="text-4xl mb-3">📍</p>
-          <p className="text-base font-bold text-[#EFE5D8]">No hay registros de ubicación aún</p>
-          <p className="text-xs text-[#A89186] mt-1 max-w-md mx-auto">
+        <div style={{
+          backgroundColor: '#2A080D',
+          borderRadius: 18,
+          padding: 60,
+          textAlign: 'center',
+          border: '1px solid rgba(212,175,90,0.2)'
+        }}>
+          <p style={{ fontSize: 44, marginBottom: 12 }}>📍</p>
+          <p style={{ color: '#EFE5D8', fontSize: 16, fontWeight: 700 }}>No hay registros de ubicación aún</p>
+          <p style={{ color: '#A89186', fontSize: 13, marginTop: 4 }}>
             En cuanto el celular reporte su primera coordenada GPS, el mapa interactivo se activará aquí.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 20 }}>
           {/* Mapa Interactivo (OpenStreetMap / Google Maps) */}
-          <div className="lg:col-span-7 xl:col-span-8 bg-[#2A080D] border border-[#D4AF5A]/30 rounded-2xl overflow-hidden flex flex-col shadow-sm">
-            <div className="px-3.5 sm:px-5 py-3 border-b border-[#D4AF5A]/20 flex flex-wrap items-center justify-between gap-2">
-              <div className="min-w-0">
-                <span className="text-xs sm:text-sm font-black text-[#F7EFE4] block truncate">
-                  📍 {latest?.latitude.toFixed(5)}, {latest?.longitude.toFixed(5)}
+          <div style={{
+            backgroundColor: '#2A080D',
+            border: '1px solid rgba(212,175,90,0.3)',
+            borderRadius: 18,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            <div style={{
+              padding: '14px 20px',
+              borderBottom: '1px solid rgba(212,175,90,0.2)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <div>
+                <span style={{ fontSize: 13, fontWeight: 800, color: '#F7EFE4' }}>
+                  Coordenadas: {latest?.latitude.toFixed(5)}, {latest?.longitude.toFixed(5)}
                 </span>
-                <span className="text-[10px] sm:text-xs text-[#A89186]">
-                  {formatDate(latest?.recorded_at || '')}
+                <span style={{ fontSize: 11, color: '#A89186', marginLeft: 10 }}>
+                  ({formatDate(latest?.recorded_at || '')})
                 </span>
               </div>
               <a
                 href={`https://www.google.com/maps?q=${latest?.latitude},${latest?.longitude}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[11px] font-bold text-[#D4AF5A] hover:underline shrink-0"
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: '#D4AF5A',
+                  textDecoration: 'none',
+                }}
               >
                 Abrir en Google Maps ↗
               </a>
             </div>
 
-            {/* Iframe OpenStreetMap embebido responsivo */}
-            <div className="w-full h-[300px] sm:h-[400px] lg:h-[480px] bg-[#190407]">
-              {latest ? (
-                <iframe
-                  title="Mapa de Ubicación"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${latest.longitude - 0.008}%2C${latest.latitude - 0.008}%2C${latest.longitude + 0.008}%2C${latest.latitude + 0.008}&layer=mapnik&marker=${latest.latitude}%2C${latest.longitude}`}
-                />
-              ) : (
-                <div className="h-full flex items-center justify-center text-xs text-[#A89186]">
-                  Sin mapa seleccionado
-                </div>
-              )}
+            {/* Iframe OpenStreetMap embebido */}
+            <div style={{ flex: 1, minHeight: 440, backgroundColor: '#190407' }}>
+              <iframe
+                title="Mapa en Tiempo Real"
+                width="100%"
+                height="100%"
+                style={{ border: 0, minHeight: 440 }}
+                src={`https://www.openstreetmap.org/export/embed.html?bbox=${latest.longitude - 0.008}%2C${latest.latitude - 0.008}%2C${latest.longitude + 0.008}%2C${latest.latitude + 0.008}&layer=mapnik&marker=${latest.latitude}%2C${latest.longitude}`}
+              />
             </div>
 
-            {/* Tarjeta inferior con telemetría adaptativa */}
-            <div className="p-3 sm:p-4 grid grid-cols-3 gap-2 bg-[#190407] border-t border-[#D4AF5A]/20 text-center">
-              <div>
-                <p className="text-[9px] sm:text-[10px] text-[#A89186] font-semibold">Batería</p>
-                <p className="text-xs sm:text-sm font-extrabold text-[#4ade80]">
+            {/* Tarjeta inferior con telemetría */}
+            <div style={{
+              padding: '14px 20px',
+              display: 'flex',
+              justifyContent: 'space-around',
+              backgroundColor: '#190407',
+              borderTop: '1px solid rgba(212,175,90,0.2)',
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: 10, color: '#A89186' }}>Batería Celular</p>
+                <p style={{ fontSize: 15, fontWeight: 800, color: '#4ade80' }}>
                   🔋 {latest?.battery_level !== -1 ? `${latest?.battery_level}%` : 'N/A'}
                 </p>
               </div>
-              <div>
-                <p className="text-[9px] sm:text-[10px] text-[#A89186] font-semibold">Precisión GPS</p>
-                <p className="text-xs sm:text-sm font-extrabold text-[#D4AF5A]">
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: 10, color: '#A89186' }}>Precisión GPS</p>
+                <p style={{ fontSize: 15, fontWeight: 800, color: '#D4AF5A' }}>
                   🎯 ±{Math.round(latest?.accuracy || 0)}m
                 </p>
               </div>
-              <div>
-                <p className="text-[9px] sm:text-[10px] text-[#A89186] font-semibold">Velocidad</p>
-                <p className="text-xs sm:text-sm font-extrabold text-[#F3E5AB]">
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: 10, color: '#A89186' }}>Velocidad</p>
+                <p style={{ fontSize: 15, fontWeight: 800, color: '#F3E5AB' }}>
                   🚗 {Math.round((latest?.speed || 0) * 3.6)} km/h
                 </p>
               </div>
@@ -225,46 +257,57 @@ export default function LocationPage() {
           </div>
 
           {/* Historial de Puntos Recientes */}
-          <div className="lg:col-span-5 xl:col-span-4 bg-[#2A080D] border border-[#D4AF5A]/30 rounded-2xl p-4 sm:p-5 flex flex-col max-h-[500px] lg:max-h-[620px] shadow-sm">
-            <p className="text-[9.5px] font-extrabold tracking-widest text-[#D4AF5A] uppercase mb-0.5">
+          <div style={{
+            backgroundColor: '#2A080D',
+            border: '1px solid rgba(212,175,90,0.3)',
+            borderRadius: 18,
+            padding: 20,
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: 560,
+          }}>
+            <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: '#D4AF5A', marginBottom: 4 }}>
               HISTORIAL RECIENTE
             </p>
-            <h2 className="text-sm sm:text-base font-bold text-[#F7EFE4] mb-3">
-              Puntos de Rastreo ({locations.length})
+            <h2 style={{ fontSize: 16, fontWeight: 800, color: '#F7EFE4', marginBottom: 16 }}>
+              Puntos de Rastreo
             </h2>
 
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
               {locations.map((loc, idx) => {
                 const isSelected = selectedLoc?.id === loc.id || (!selectedLoc && idx === 0)
                 return (
                   <div
                     key={loc.id}
                     onClick={() => setSelectedLoc(loc)}
-                    className={`
-                      p-3 rounded-xl border cursor-pointer flex justify-between items-center transition-all
-                      ${isSelected
-                        ? 'bg-[#D4AF5A]/15 border-[#D4AF5A]'
-                        : 'bg-[#190407] border-[#D4AF5A]/15 hover:border-[#D4AF5A]/30'
-                      }
-                    `}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: 12,
+                      backgroundColor: isSelected ? 'rgba(212,175,90,0.15)' : '#190407',
+                      border: `1px solid ${isSelected ? '#D4AF5A' : 'rgba(212,175,90,0.15)'}`,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
                   >
-                    <div className="min-w-0 pr-2">
-                      <p className="text-xs font-bold text-[#F7EFE4] truncate">
+                    <div>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: '#F7EFE4' }}>
                         📍 {loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)}
                       </p>
-                      <p className="text-[10px] text-[#D4AF5A] truncate mt-0.5">
+                      <p style={{ fontSize: 10, color: '#D4AF5A', marginTop: 2 }}>
                         {loc.couples?.couple_names} • Celular de {loc.couples?.partner_two || 'Pareja'}
                       </p>
-                      <p className="text-[9.5px] text-[#A89186] mt-0.5">
+                      <p style={{ fontSize: 10, color: '#6D2932', marginTop: 2 }}>
                         {formatDate(loc.recorded_at)}
                       </p>
                     </div>
 
-                    <div className="text-right shrink-0">
-                      <span className="text-[10px] font-bold text-[#4ade80] block">
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: 10, color: '#4ade80', display: 'block' }}>
                         🔋 {loc.battery_level}%
                       </span>
-                      <span className="text-[9px] text-[#A89186]">
+                      <span style={{ fontSize: 9, color: '#A89186' }}>
                         ±{Math.round(loc.accuracy || 0)}m
                       </span>
                     </div>
