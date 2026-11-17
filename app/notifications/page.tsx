@@ -149,7 +149,7 @@ export default function NotificationsPage() {
           backgroundColor: '#190407',
           flexShrink: 0,
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="responsive-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: '#D4AF5A', marginBottom: 4 }}>
                 {session?.isAdmin ? 'REGISTRO EN TIEMPO REAL (ADMIN)' : `NOTIFICACIONES PRIVADAS • ${session?.coupleName}`}
@@ -189,7 +189,7 @@ export default function NotificationsPage() {
           </div>
 
           {/* Filtros */}
-          <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+          <div className="responsive-filters" style={{ display: 'flex', gap: 10, marginTop: 16 }}>
             <input
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(0) }}
@@ -310,7 +310,7 @@ export default function NotificationsPage() {
 
       {/* ── Panel de detalle ── */}
       {selected && (
-        <div style={{
+        <div className="notif-detail-panel" style={{
           width: 320, flexShrink: 0,
           backgroundColor: '#2A080D',
           borderLeft: '1px solid rgba(212,175,90,0.25)',

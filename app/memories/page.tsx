@@ -10,7 +10,7 @@ export default async function MemoriesPage() {
   const rows = (data ?? []) as any[]
 
   return (
-    <div style={{ padding: '32px 32px 80px', maxWidth: 1000 }}>
+    <div className="page-container" style={{ padding: '32px 32px 80px', maxWidth: 1000 }}>
       <div style={{ marginBottom: 28 }}>
         <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: '#D4AF5A', marginBottom: 4 }}>NOTAS DE AMOR</p>
         <h1 style={{ fontSize: 24, fontWeight: 900, color: '#F7EFE4' }}>Recuerdos</h1>

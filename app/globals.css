@@ -45,3 +45,100 @@ body {
   50%       { opacity: 0.5; }
 }
 .animate-pulse-gold { animation: pulse-gold 2s ease-in-out infinite; }
+
+/* ── Mobile & Responsive Overrides ── */
+.app-root-body {
+  display: flex;
+  min-height: 100vh;
+  background-color: #190407;
+}
+
+.desktop-sidebar {
+  display: flex !important;
+}
+
+.mobile-nav-bar {
+  display: none !important;
+}
+
+.page-container {
+  padding: 32px 32px 80px;
+  max-width: 1200px;
+  width: 100%;
+}
+
+.responsive-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.responsive-grid-location {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .app-root-body {
+    flex-direction: column !important;
+  }
+  .desktop-sidebar {
+    display: none !important;
+  }
+  .mobile-nav-bar {
+    display: flex !important;
+  }
+  .page-container {
+    padding: 16px 14px 60px !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .responsive-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  .responsive-header-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+  .responsive-header-actions > * {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .responsive-grid-2 {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .responsive-grid-location {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .responsive-filters {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+  .responsive-filters > * {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .responsive-table-scroll {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    width: 100% !important;
+  }
+  .login-card {
+    padding: 28px 20px !important;
+    border-radius: 18px !important;
+  }
+  .notif-detail-panel {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    z-index: 100 !important;
+  }
+}
+

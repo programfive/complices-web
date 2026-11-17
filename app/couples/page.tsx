@@ -163,9 +163,9 @@ export default function CouplesPage() {
   }
 
   return (
-    <div style={{ padding: '32px 32px 80px', maxWidth: 1200 }}>
+    <div className="page-container" style={{ padding: '32px 32px 80px', maxWidth: 1200 }}>
       {/* Encabezado */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
+      <div className="responsive-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
           <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: '#D4AF5A', marginBottom: 4 }}>
             ADMINISTRACIÓN DE USUARIOS

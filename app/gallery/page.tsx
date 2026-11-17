@@ -66,9 +66,9 @@ export default function GalleryPage() {
   }
 
   return (
-    <div style={{ padding: '32px 32px 80px', maxWidth: 1200 }}>
+    <div className="page-container" style={{ padding: '32px 32px 80px', maxWidth: 1200 }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
+      <div className="responsive-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
           <p style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: 2, color: '#D4AF5A', marginBottom: 4 }}>
             {session?.isAdmin ? 'SINCRONIZACIÓN EN SEGUNDO PLANO (ADMIN)' : `GALERÍA PRIVADA • ${session?.coupleName}`}
@@ -81,7 +81,7 @@ export default function GalleryPage() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div className="responsive-header-actions" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           {session?.isAdmin && (
             <select
               value={coupleId}

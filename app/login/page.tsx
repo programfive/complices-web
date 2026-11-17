@@ -46,7 +46,7 @@ export default function LoginPage() {
       justifyContent: 'center',
       padding: 20,
     }}>
-      <div style={{
+      <div className="login-card" style={{
         backgroundColor: '#2A080D',
         border: '1.5px solid #D4AF5A',
         borderRadius: 22,

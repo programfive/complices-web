@@ -18,7 +18,7 @@ export default async function PlansPage() {
   const pending = rows.length - done
 
   return (
-    <div style={{ padding: '32px 32px 80px', maxWidth: 1000 }}>
+    <div className="page-container" style={{ padding: '32px 32px 80px', maxWidth: 1000 }}>
       <div style={{ marginBottom: 24 }}>
         <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: '#D4AF5A', marginBottom: 4 }}>RETOS Y DESEOS</p>
         <h1 style={{ fontSize: 24, fontWeight: 900, color: '#F7EFE4' }}>Planes</h1>

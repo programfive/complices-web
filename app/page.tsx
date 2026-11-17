@@ -41,7 +41,7 @@ export default async function DashboardPage() {
   ]
 
   return (
-    <div style={{ padding: '32px 32px 80px', maxWidth: 1200 }}>
+    <div className="page-container" style={{ padding: '32px 32px 80px', maxWidth: 1200 }}>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: '#D4AF5A', marginBottom: 6 }}>
@@ -73,7 +73,7 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
 
         {/* Top Apps */}
         <div style={{
