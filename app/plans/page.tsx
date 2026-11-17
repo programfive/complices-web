@@ -1,11 +1,5 @@
 import { supabase } from '@/lib/supabase'
 
-const CAT_COLORS: Record<string, string> = {
-  Cita:   '#D4AF5A',
-  Reto:   '#E06C75',
-  Deseo:  '#C7B7A3',
-}
-
 export default async function PlansPage() {
   const { data } = await supabase
     .from('plans')
@@ -18,45 +12,53 @@ export default async function PlansPage() {
   const pending = rows.length - done
 
   return (
-    <div style={{ padding: '32px 32px 80px', maxWidth: 1000 }}>
-      <div style={{ marginBottom: 24 }}>
-        <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: '#D4AF5A', marginBottom: 4 }}>RETOS Y DESEOS</p>
-        <h1 style={{ fontSize: 24, fontWeight: 900, color: '#F7EFE4' }}>Planes</h1>
-        <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
-          <span style={{ fontSize: 12, color: '#4ade80' }}>✓ {done} completados</span>
-          <span style={{ fontSize: 12, color: '#A89186' }}>⏳ {pending} pendientes</span>
+    <div className="p-3 sm:p-5 md:p-8 max-w-4xl mx-auto pb-24">
+      <div className="mb-5 sm:mb-7">
+        <p className="text-[9.5px] font-extrabold tracking-widest text-[#D4AF5A] uppercase mb-1">
+          RETOS Y DESEOS
+        </p>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-[#F7EFE4] tracking-tight">
+          Planes de Pareja
+        </h1>
+        <div className="flex gap-4 mt-1.5 text-xs">
+          <span className="text-[#4ade80] font-bold">✓ {done} completados</span>
+          <span className="text-[#A89186]">⏳ {pending} pendientes</span>
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="flex flex-col gap-2.5">
         {rows.length === 0 ? (
-          <p style={{ color: '#A89186' }}>No hay planes.</p>
+          <div className="bg-[#2A080D] rounded-2xl p-8 sm:p-14 text-center border border-[#D4AF5A]/20">
+            <p className="text-4xl mb-3">✎</p>
+            <p className="text-base font-bold text-[#EFE5D8]">No hay planes registrados</p>
+            <p className="text-xs text-[#A89186] mt-1">Los retos, citas y planes de las parejas aparecerán aquí.</p>
+          </div>
         ) : rows.map(p => (
-          <div key={p.id} style={{
-            backgroundColor: '#2A080D',
-            border: `1px solid ${p.completed ? 'rgba(74,222,128,0.2)' : 'rgba(109,41,50,0.4)'}`,
-            borderRadius: 12, padding: '14px 18px',
-            display: 'flex', alignItems: 'center', gap: 14,
-            opacity: p.completed ? 0.7 : 1,
-          }}>
-            <span style={{ fontSize: 18 }}>{p.completed ? '✓' : '○'}</span>
-            <div style={{ flex: 1 }}>
-              <p style={{
-                fontSize: 14, fontWeight: 700,
-                color: p.completed ? '#A89186' : '#F7EFE4',
-                textDecoration: p.completed ? 'line-through' : 'none',
-              }}>{p.title}</p>
-              <p style={{ fontSize: 11, color: '#6D2932', marginTop: 2 }}>
-                {p.couples?.couple_names ?? '—'}
+          <div
+            key={p.id}
+            className={`
+              p-3.5 sm:p-4 rounded-xl border flex items-center gap-3.5 transition-all
+              ${p.completed
+                ? 'bg-[#2A080D]/60 border-[#4ade80]/20 opacity-80'
+                : 'bg-[#2A080D] border-[#6D2932]/40'
+              }
+            `}
+          >
+            <span className={`text-base font-black ${p.completed ? 'text-[#4ade80]' : 'text-[#A89186]'}`}>
+              {p.completed ? '✓' : '○'}
+            </span>
+            <div className="flex-1 min-w-0">
+              <p
+                className={`text-xs sm:text-sm font-bold break-words ${
+                  p.completed ? 'line-through text-[#A89186]' : 'text-[#F7EFE4]'
+                }`}
+              >
+                {p.title}
+              </p>
+              <p className="text-[10px] text-[#A89186] mt-0.5 truncate">
+                {p.couples?.couple_names ?? '—'} {p.category ? `• ${p.category}` : ''}
               </p>
             </div>
-            <span style={{
-              fontSize: 10, fontWeight: 700, padding: '3px 10px',
-              borderRadius: 20, letterSpacing: 0.5,
-              backgroundColor: `${CAT_COLORS[p.category] ?? '#6D2932'}20`,
-              color: CAT_COLORS[p.category] ?? '#C7B7A3',
-              border: `1px solid ${CAT_COLORS[p.category] ?? '#6D2932'}40`,
-            }}>{p.category}</span>
           </div>
         ))}
       </div>

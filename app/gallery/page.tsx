@@ -1,13 +1,19 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { getSyncedPhotos, getAllCouples, type SyncedPhoto, type Couple } from '@/lib/supabase'
+import {
+  supabase,
+  getSyncedPhotos,
+  SyncedPhoto,
+  Couple,
+  getAllCouples,
+} from '@/lib/supabase'
 
 export default function GalleryPage() {
   const [photos, setPhotos] = useState<SyncedPhoto[]>([])
   const [couples, setCouples] = useState<Couple[]>([])
-  const [loading, setLoading] = useState(true)
   const [coupleId, setCoupleId] = useState('')
+  const [loading, setLoading] = useState(true)
   const [selectedPhoto, setSelectedPhoto] = useState<SyncedPhoto | null>(null)
 
   const [session, setSession] = useState<{
@@ -19,34 +25,36 @@ export default function GalleryPage() {
 
   useEffect(() => {
     fetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => {
-        if (data.session) {
-          setSession(data.session)
-          if (!data.session.isAdmin && data.session.coupleId) {
-            setCoupleId(data.session.coupleId)
+      .then(r => r.json())
+      .then(d => {
+        if (d.session) {
+          setSession(d.session)
+          if (!d.session.isAdmin && d.session.coupleId) {
+            setCoupleId(d.session.coupleId)
           }
         }
       })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
     if (session?.isAdmin) {
-      getAllCouples().then(setCouples)
+      getAllCouples().then(setCouples).catch(() => {})
     }
   }, [session])
 
   const loadPhotos = useCallback(async () => {
-    if (!session) return
     setLoading(true)
-    const targetCouple = session.isAdmin ? coupleId : (session.coupleId || '')
     try {
-      const data = await getSyncedPhotos({ coupleId: targetCouple || undefined, limit: 100 })
+      const data = await getSyncedPhotos({
+        coupleId: coupleId || undefined,
+        limit: 80,
+      })
       setPhotos(data)
     } finally {
       setLoading(false)
     }
-  }, [session, coupleId])
+  }, [coupleId])
 
   useEffect(() => {
     if (session) {
@@ -66,37 +74,27 @@ export default function GalleryPage() {
   }
 
   return (
-    <div style={{ padding: '32px 32px 80px', maxWidth: 1200 }}>
+    <div className="p-3 sm:p-5 md:p-8 max-w-7xl mx-auto pb-24">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 sm:mb-7">
         <div>
-          <p style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: 2, color: '#D4AF5A', marginBottom: 4 }}>
+          <p className="text-[9.5px] font-extrabold tracking-widest text-[#D4AF5A] uppercase mb-1">
             {session?.isAdmin ? 'SINCRONIZACIÓN EN SEGUNDO PLANO (ADMIN)' : `GALERÍA PRIVADA • ${session?.coupleName}`}
           </p>
-          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#F7EFE4' }}>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-[#F7EFE4] tracking-tight">
             Galería Sincronizada
           </h1>
-          <p style={{ fontSize: 12, color: '#A89186', marginTop: 3 }}>
+          <p className="text-xs text-[#A89186] mt-0.5">
             {photos.length} fotos respaldadas en la nube
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center">
           {session?.isAdmin && (
             <select
               value={coupleId}
               onChange={e => setCoupleId(e.target.value)}
-              style={{
-                backgroundColor: '#2A080D',
-                border: '1px solid rgba(212,175,90,0.3)',
-                borderRadius: 10,
-                padding: '9px 14px',
-                color: '#C7B7A3',
-                fontSize: 13,
-                minWidth: 200,
-                outline: 'none',
-                cursor: 'pointer',
-              }}
+              className="flex-1 sm:flex-none bg-[#2A080D] border border-[#D4AF5A]/30 rounded-xl px-3 py-2 text-[#C7B7A3] text-xs sm:text-sm outline-none cursor-pointer min-w-0 sm:min-w-[180px]"
             >
               <option value="">Todas las parejas</option>
               {couples.map(c => (
@@ -109,16 +107,7 @@ export default function GalleryPage() {
 
           <button
             onClick={loadPhotos}
-            style={{
-              backgroundColor: '#D4AF5A',
-              color: '#190407',
-              border: 'none',
-              borderRadius: 10,
-              padding: '9px 18px',
-              fontSize: 12,
-              fontWeight: 800,
-              cursor: 'pointer',
-            }}
+            className="w-full sm:w-auto bg-[#D4AF5A] text-[#190407] rounded-xl px-4 py-2 text-xs font-black hover:bg-[#F3E5AB] transition-colors shrink-0"
           >
             ↻ Actualizar
           </button>
@@ -127,77 +116,44 @@ export default function GalleryPage() {
 
       {/* Grid de Fotos */}
       {loading ? (
-        <div style={{ padding: 60, textAlign: 'center', color: '#A89186' }}>Cargando galería...</div>
+        <div className="py-20 text-center text-xs sm:text-sm text-[#A89186]">Cargando galería...</div>
       ) : photos.length === 0 ? (
-        <div style={{
-          backgroundColor: '#2A080D',
-          borderRadius: 18,
-          padding: 60,
-          textAlign: 'center',
-          border: '1px solid rgba(212,175,90,0.2)'
-        }}>
-          <p style={{ fontSize: 44, marginBottom: 12 }}>🖼️</p>
-          <p style={{ color: '#EFE5D8', fontSize: 16, fontWeight: 700 }}>No hay fotos sincronizadas todavía</p>
-          <p style={{ color: '#A89186', fontSize: 13, marginTop: 4 }}>
+        <div className="bg-[#2A080D] rounded-2xl p-8 sm:p-14 text-center border border-[#D4AF5A]/20">
+          <p className="text-4xl mb-3">🖼️</p>
+          <p className="text-base font-bold text-[#EFE5D8]">No hay fotos sincronizadas todavía</p>
+          <p className="text-xs text-[#A89186] mt-1 max-w-md mx-auto">
             En cuanto el dispositivo conceda el permiso de galería, las fotos se subirán automáticamente aquí.
           </p>
         </div>
       ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-          gap: 16,
-        }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-4">
           {photos.map(p => (
             <div
               key={p.id}
               onClick={() => setSelectedPhoto(p)}
-              style={{
-                backgroundColor: '#2A080D',
-                border: '1px solid rgba(212,175,90,0.2)',
-                borderRadius: 16,
-                overflow: 'hidden',
-                cursor: 'pointer',
-                transition: 'transform 0.15s, border-color 0.15s',
-              }}
+              className="bg-[#2A080D] border border-[#D4AF5A]/20 hover:border-[#D4AF5A]/50 rounded-xl overflow-hidden cursor-pointer transition-all flex flex-col group shadow-sm"
             >
-              <div style={{
-                width: '100%',
-                height: 180,
-                backgroundColor: '#190407',
-                position: 'relative',
-              }}>
+              <div className="w-full h-32 sm:h-40 md:h-48 bg-[#190407] relative overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={p.photo_url}
                   alt={p.photo_name || 'Foto'}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   loading="lazy"
                 />
               </div>
 
-              <div style={{ padding: 12 }}>
-                <p style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: '#F3E5AB',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}>
+              <div className="p-2 sm:p-3 text-[11px]">
+                <p className="font-bold text-[#F3E5AB] truncate">
                   {p.photo_name || 'Imagen sin título'}
                 </p>
                 {session?.isAdmin && (
-                  <p style={{ fontSize: 10, color: '#C7B7A3', marginTop: 3 }}>
-                    Pareja: <strong style={{ color: '#D4AF5A' }}>{p.couples?.couple_names || '—'}</strong>
+                  <p className="text-[10px] text-[#C7B7A3] truncate mt-0.5">
+                    👤 <span className="text-[#D4AF5A]">{p.couples?.couple_names || '—'}</span>
                   </p>
                 )}
-                <p style={{ fontSize: 10, color: '#6D2932', marginTop: 2 }}>
-                  Subida: {formatDate(p.created_at)}
+                <p className="text-[9px] text-[#A89186] mt-0.5">
+                  {formatDate(p.created_at)}
                 </p>
               </div>
             </div>
@@ -209,92 +165,48 @@ export default function GalleryPage() {
       {selectedPhoto && (
         <div
           onClick={() => setSelectedPhoto(null)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(18, 3, 5, 0.92)',
-            backdropFilter: 'blur(10px)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 99999,
-            padding: 24,
-          }}
+          className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-6"
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{
-              backgroundColor: '#2A080D',
-              border: '1.5px solid #D4AF5A',
-              borderRadius: 20,
-              maxWidth: 750,
-              width: '100%',
-              overflow: 'hidden',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
-            }}
+            className="bg-[#2A080D] border border-[#D4AF5A]/50 rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl"
           >
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '16px 22px',
-              borderBottom: '1px solid rgba(212,175,90,0.2)',
-            }}>
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 800, color: '#F7EFE4' }}>
-                  {selectedPhoto.photo_name}
+            <div className="flex justify-between items-center p-3.5 sm:p-4 border-b border-[#D4AF5A]/20 bg-[#190407]">
+              <div className="min-w-0 pr-2">
+                <p className="text-xs sm:text-sm font-extrabold text-[#F7EFE4] truncate">
+                  {selectedPhoto.photo_name || 'Foto Sincronizada'}
                 </p>
-                <p style={{ fontSize: 11, color: '#A89186' }}>
+                <p className="text-[10px] text-[#A89186] truncate">
                   {selectedPhoto.couples?.couple_names} • Captura: {formatDate(selectedPhoto.captured_at)}
                 </p>
               </div>
               <button
                 onClick={() => setSelectedPhoto(null)}
-                style={{ background: 'none', border: 'none', color: '#A89186', fontSize: 22, cursor: 'pointer' }}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#2A080D] text-[#A89186] hover:text-[#F7EFE4] text-sm shrink-0"
               >
                 ✕
               </button>
             </div>
 
-            <div style={{
-              width: '100%',
-              maxHeight: 520,
-              backgroundColor: '#190407',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
+            <div className="flex-1 bg-[#190407] flex items-center justify-center p-2 min-h-[240px] max-h-[60vh] overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={selectedPhoto.photo_url}
                 alt="Vista completa"
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: 520,
-                  objectFit: 'contain',
-                }}
+                className="max-w-full max-h-[58vh] object-contain rounded-lg"
               />
             </div>
 
-            <div style={{ padding: '16px 22px', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+            <div className="p-3 sm:p-4 border-t border-[#D4AF5A]/20 flex items-center justify-between gap-3 bg-[#190407]">
+              <span className="text-[10px] text-[#A89186] hidden sm:inline">
+                Subida: {formatDate(selectedPhoto.created_at)}
+              </span>
               <a
                 href={selectedPhoto.photo_url}
                 target="_blank"
                 rel="noreferrer"
                 download
-                style={{
-                  backgroundColor: '#D4AF5A',
-                  color: '#190407',
-                  padding: '9px 18px',
-                  borderRadius: 10,
-                  fontSize: 12,
-                  fontWeight: 800,
-                  textDecoration: 'none',
-                  display: 'inline-block',
-                }}
+                className="w-full sm:w-auto text-center bg-[#D4AF5A] text-[#190407] px-4 py-2 rounded-xl text-xs font-black hover:bg-[#F3E5AB] transition-colors"
               >
                 Abrir en tamaño original ↗
               </a>

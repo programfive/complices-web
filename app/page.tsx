@@ -41,66 +41,74 @@ export default async function DashboardPage() {
   ]
 
   return (
-    <div style={{ padding: '32px 32px 80px', maxWidth: 1200 }}>
+    <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto pb-24">
       {/* Header */}
-      <div style={{ marginBottom: 32 }}>
-        <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: '#D4AF5A', marginBottom: 6 }}>
+      <div className="mb-6 sm:mb-8">
+        <p className="text-[10px] font-extrabold tracking-widest text-[#D4AF5A] uppercase mb-1">
           PANEL DE CONTROL
         </p>
-        <h1 style={{ fontSize: 28, fontWeight: 900, color: '#F7EFE4' }}>Dashboard</h1>
-        <p style={{ fontSize: 13, color: '#A89186', marginTop: 4 }}>
-          Vista general de toda la actividad
+        <h1 className="text-2xl sm:text-3xl font-black text-[#F7EFE4] tracking-tight">
+          Dashboard
+        </h1>
+        <p className="text-xs sm:text-sm text-[#A89186] mt-1">
+          Vista general de toda la actividad en vivo
         </p>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 14, marginBottom: 32 }}>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {STAT_CARDS.map(card => (
-          <div key={card.label} style={{
-            backgroundColor: '#2A080D',
-            border: '1px solid rgba(212,175,90,0.3)',
-            borderRadius: 16,
-            padding: '20px 20px',
-          }}>
-            <span style={{ fontSize: 24 }}>{card.icon}</span>
-            <p style={{ fontSize: 32, fontWeight: 900, color: card.color, margin: '8px 0 2px', lineHeight: 1 }}>
+          <div
+            key={card.label}
+            className="bg-[#2A080D] border border-[#D4AF5A]/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm"
+          >
+            <span className="text-xl sm:text-2xl">{card.icon}</span>
+            <p
+              className="text-2xl sm:text-3xl font-black my-2 leading-none"
+              style={{ color: card.color }}
+            >
               {card.value.toLocaleString()}
             </p>
-            <p style={{ fontSize: 11, color: '#A89186', fontWeight: 600, letterSpacing: 0.5 }}>
+            <p className="text-[10px] sm:text-xs text-[#A89186] font-semibold tracking-wider uppercase">
               {card.label}
             </p>
           </div>
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      {/* Grid inferior: Top Apps & Actividad Reciente */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
 
         {/* Top Apps */}
-        <div style={{
-          backgroundColor: '#2A080D',
-          border: '1px solid rgba(212,175,90,0.3)',
-          borderRadius: 18,
-          padding: 24,
-        }}>
-          <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: '#D4AF5A', marginBottom: 4 }}>APPS MÁS ACTIVAS</p>
-          <h2 style={{ fontSize: 16, fontWeight: 800, color: '#F7EFE4', marginBottom: 20 }}>Notificaciones por App</h2>
+        <div className="bg-[#2A080D] border border-[#D4AF5A]/30 rounded-2xl p-4 sm:p-6 shadow-sm">
+          <p className="text-[9.5px] font-extrabold tracking-widest text-[#D4AF5A] uppercase mb-1">
+            APPS MÁS ACTIVAS
+          </p>
+          <h2 className="text-base sm:text-lg font-bold text-[#F7EFE4] mb-4">
+            Notificaciones por App
+          </h2>
           {topApps.length === 0 ? (
-            <p style={{ color: '#A89186', fontSize: 13 }}>Sin datos aún</p>
+            <p className="text-[#A89186] text-xs sm:text-sm py-4">Sin datos de notificaciones aún</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {topApps.map((app, i) => {
-                const max = topApps[0].count
+            <div className="flex flex-col gap-3">
+              {topApps.map((app) => {
+                const max = topApps[0].count || 1
                 const pct = Math.round((app.count / max) * 100)
                 return (
                   <div key={app.package_name}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 13, color: '#EFE5D8' }}>
+                    <div className="flex justify-between items-center text-xs sm:text-sm mb-1.5">
+                      <span className="text-[#EFE5D8] font-medium truncate max-w-[200px] sm:max-w-[260px]">
                         {appEmoji(app.package_name)} {app.app_name}
                       </span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#D4AF5A' }}>{app.count}</span>
+                      <span className="font-bold text-[#D4AF5A] ml-2 shrink-0">
+                        {app.count}
+                      </span>
                     </div>
-                    <div style={{ height: 4, backgroundColor: '#4D141C', borderRadius: 2 }}>
-                      <div style={{ height: 4, width: `${pct}%`, backgroundColor: i === 0 ? '#D4AF5A' : '#6D2932', borderRadius: 2 }} />
+                    <div className="h-1.5 bg-[#190407] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#D4AF5A] rounded-full transition-all duration-300"
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
                   </div>
                 )
@@ -109,41 +117,65 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Recent Activity */}
-        <div style={{
-          backgroundColor: '#2A080D',
-          border: '1px solid rgba(212,175,90,0.3)',
-          borderRadius: 18,
-          padding: 24,
-        }}>
-          <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: '#D4AF5A', marginBottom: 4 }}>TIEMPO REAL</p>
-          <h2 style={{ fontSize: 16, fontWeight: 800, color: '#F7EFE4', marginBottom: 20 }}>Actividad Reciente</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {activity.notifications.map((n: any) => (
-              <div key={n.id} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 12px',
-                backgroundColor: '#190407',
-                borderRadius: 10,
-                border: '1px solid rgba(212,175,90,0.15)',
-              }}>
-                <span style={{ fontSize: 18 }}>{appEmoji(n.package_name ?? '')}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: '#F3E5AB', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {n.app_name}
-                  </p>
-                  <p style={{ fontSize: 11, color: '#A89186' }}>
-                    {(n.couples as any)?.couple_names ?? '—'}
-                  </p>
+        {/* Actividad Reciente */}
+        <div className="bg-[#2A080D] border border-[#D4AF5A]/30 rounded-2xl p-4 sm:p-6 shadow-sm">
+          <p className="text-[9.5px] font-extrabold tracking-widest text-[#D4AF5A] uppercase mb-1">
+            EN VIVO
+          </p>
+          <h2 className="text-base sm:text-lg font-bold text-[#F7EFE4] mb-4">
+            Actividad Reciente
+          </h2>
+          {activity.notifications.length === 0 && activity.messages.length === 0 ? (
+            <p className="text-[#A89186] text-xs sm:text-sm py-4">Sin actividad reciente</p>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {activity.notifications.slice(0, 4).map((n: any) => (
+                <div
+                  key={n.id}
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#190407]/70 border border-[#D4AF5A]/15 text-xs"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                    <span className="text-base shrink-0">🔔</span>
+                    <div className="min-w-0">
+                      <p className="font-bold text-[#EFE5D8] truncate">
+                        {n.title || n.app_name}
+                      </p>
+                      <p className="text-[10px] text-[#A89186] truncate">
+                        {n.couples?.couple_names || 'Pareja'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-[#D4AF5A] shrink-0 font-semibold">
+                    {timeAgo(n.received_at)}
+                  </span>
                 </div>
-                <span style={{ fontSize: 10, color: '#6D2932', flexShrink: 0 }}>{timeAgo(n.received_at)}</span>
-              </div>
-            ))}
-            {activity.notifications.length === 0 && (
-              <p style={{ color: '#A89186', fontSize: 13 }}>Sin notificaciones recientes</p>
-            )}
-          </div>
+              ))}
+
+              {activity.messages.slice(0, 3).map((m: any) => (
+                <div
+                  key={m.id}
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#190407]/70 border border-[#6D2932]/40 text-xs"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                    <span className="text-base shrink-0">💬</span>
+                    <div className="min-w-0">
+                      <p className="font-bold text-[#EFE5D8] truncate">
+                        {m.text}
+                      </p>
+                      <p className="text-[10px] text-[#A89186] truncate">
+                        {m.couples?.couple_names || 'Chat'} • {m.sender}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-[#A89186] shrink-0">
+                    {timeAgo(m.created_at)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+
       </div>
     </div>
   )

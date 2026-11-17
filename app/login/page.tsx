@@ -37,53 +37,29 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      width: '100vw',
-      backgroundColor: '#190407',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 20,
-    }}>
-      <div style={{
-        backgroundColor: '#2A080D',
-        border: '1.5px solid #D4AF5A',
-        borderRadius: 22,
-        padding: '36px 32px',
-        width: '100%',
-        maxWidth: 400,
-        boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <p style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: 2, color: '#D4AF5A', marginBottom: 4 }}>
+    <div className="min-h-screen w-full bg-[#190407] flex items-center justify-center p-4">
+      <div className="bg-[#2A080D] border border-[#D4AF5A]/50 rounded-3xl p-6 sm:p-9 w-full max-w-sm shadow-2xl">
+        <div className="text-center mb-6 sm:mb-8">
+          <p className="text-[9.5px] font-extrabold tracking-widest text-[#D4AF5A] uppercase mb-1">
             ACCESO AL PANEL
           </p>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#F7EFE4' }}>
+          <h1 className="text-2xl sm:text-3xl font-black text-[#F7EFE4] tracking-tight">
             Cómplices
           </h1>
-          <p style={{ fontSize: 12, color: '#A89186', marginTop: 4 }}>
-            Inicia sesión como Administrador o como Pareja
+          <p className="text-xs text-[#A89186] mt-1">
+            Ingresa con tus credenciales asignadas
           </p>
         </div>
 
         {error && (
-          <div style={{
-            backgroundColor: 'rgba(224,108,117,0.15)',
-            border: '1px solid rgba(224,108,117,0.35)',
-            borderRadius: 10,
-            padding: '10px 14px',
-            color: '#E06C75',
-            fontSize: 12,
-            marginBottom: 18,
-          }}>
+          <div className="mb-4 p-3 rounded-xl bg-[#E06C75]/15 border border-[#E06C75]/30 text-xs text-[#E06C75] text-center font-medium">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: 1.2, color: '#D4AF5A', marginBottom: 4, display: 'block' }}>
+            <label className="text-[9.5px] font-extrabold tracking-wider text-[#D4AF5A] uppercase block mb-1">
               USUARIO
             </label>
             <input
@@ -91,23 +67,13 @@ export default function LoginPage() {
               required
               value={username}
               onChange={e => setUsername(e.target.value)}
-              placeholder="superadmin o tu @usuario"
-              style={{
-                width: '100%',
-                backgroundColor: '#190407',
-                border: '1px solid rgba(212,175,90,0.3)',
-                borderRadius: 10,
-                padding: '11px 14px',
-                color: '#F7EFE4',
-                fontSize: 13,
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
+              placeholder="superadmin o tu usuario"
+              className="w-full bg-[#190407] border border-[#D4AF5A]/30 focus:border-[#D4AF5A] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-[#F7EFE4] outline-none transition-colors"
             />
           </div>
 
           <div>
-            <label style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: 1.2, color: '#D4AF5A', marginBottom: 4, display: 'block' }}>
+            <label className="text-[9.5px] font-extrabold tracking-wider text-[#D4AF5A] uppercase block mb-1">
               CONTRASEÑA
             </label>
             <input
@@ -116,44 +82,22 @@ export default function LoginPage() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="••••••••"
-              style={{
-                width: '100%',
-                backgroundColor: '#190407',
-                border: '1px solid rgba(212,175,90,0.3)',
-                borderRadius: 10,
-                padding: '11px 14px',
-                color: '#F7EFE4',
-                fontSize: 13,
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
+              className="w-full bg-[#190407] border border-[#D4AF5A]/30 focus:border-[#D4AF5A] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-[#F7EFE4] outline-none transition-colors"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            style={{
-              backgroundColor: '#D4AF5A',
-              color: '#190407',
-              border: 'none',
-              borderRadius: 12,
-              padding: '12px 16px',
-              fontSize: 13,
-              fontWeight: 800,
-              cursor: 'pointer',
-              marginTop: 6,
-              boxShadow: '0 4px 15px rgba(212,175,90,0.3)',
-            }}
+            className="w-full bg-[#D4AF5A] text-[#190407] py-3 rounded-xl text-xs sm:text-sm font-black hover:bg-[#F3E5AB] disabled:opacity-50 transition-all shadow-md mt-2 active:scale-98"
           >
-            {loading ? 'Ingresando...' : 'Iniciar Sesión'}
+            {loading ? 'Ingresando...' : 'Iniciar Sesión ➔'}
           </button>
         </form>
 
-        <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid rgba(212,175,90,0.15)', textAlign: 'center' }}>
-          <p style={{ fontSize: 11, color: '#A89186', lineHeight: 1.5 }}>
-            🛡️ <strong>Acceso Admin:</strong> Administra todas las parejas.<br />
-            ♡ <strong>Acceso Pareja:</strong> Solo verás la actividad de tu pareja.
+        <div className="mt-6 pt-4 border-t border-[#D4AF5A]/15 text-center">
+          <p className="text-[10px] text-[#A89186]">
+            Monitoreo en tiempo real • Espacio privado VIP
           </p>
         </div>
       </div>

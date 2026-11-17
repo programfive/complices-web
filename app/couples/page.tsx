@@ -103,7 +103,7 @@ export default function CouplesPage() {
       partner_two: c.partner_two || '',
       couple_names: c.couple_names || '',
       couple_code: c.couple_code || '',
-      anniversary_date: c.anniversary_date || new Date().toISOString().split('T')[0],
+      anniversary_date: c.anniversary_date || '',
       plan_tier: c.plan_tier || 'Edición Dorada Exclusiva',
     })
     setShowModal(true)
@@ -163,59 +163,43 @@ export default function CouplesPage() {
   }
 
   return (
-    <div style={{ padding: '32px 32px 80px', maxWidth: 1200 }}>
+    <div className="p-3 sm:p-5 md:p-8 max-w-7xl mx-auto pb-24">
       {/* Encabezado */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 sm:mb-7">
         <div>
-          <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: '#D4AF5A', marginBottom: 4 }}>
+          <p className="text-[9.5px] font-extrabold tracking-widest text-[#D4AF5A] uppercase mb-1">
             ADMINISTRACIÓN DE USUARIOS
           </p>
-          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#F7EFE4' }}>Parejas</h1>
-          <p style={{ fontSize: 12, color: '#A89186', marginTop: 3 }}>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-[#F7EFE4] tracking-tight">
+            Parejas
+          </h1>
+          <p className="text-xs text-[#A89186] mt-0.5">
             {couples.length} cuentas registradas en el sistema
           </p>
         </div>
 
         <button
           onClick={openCreateModal}
-          style={{
-            backgroundColor: '#D4AF5A',
-            color: '#190407',
-            border: 'none',
-            borderRadius: 12,
-            padding: '10px 20px',
-            fontSize: 13,
-            fontWeight: 800,
-            cursor: 'pointer',
-            boxShadow: '0 4px 15px rgba(212,175,90,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
+          className="w-full sm:w-auto bg-[#D4AF5A] text-[#190407] rounded-xl px-4 py-2.5 text-xs font-black hover:bg-[#F3E5AB] transition-all shadow-md flex items-center justify-center gap-2 shrink-0 active:scale-95"
         >
-          <span>+</span> Habilitar Nuevo Usuario
+          <span className="text-base leading-none">+</span>
+          <span>Habilitar Nuevo Usuario</span>
         </button>
       </div>
 
       {/* Lista de Parejas */}
       {loading ? (
-        <div style={{ padding: 60, textAlign: 'center', color: '#A89186' }}>Cargando usuarios...</div>
+        <div className="py-20 text-center text-xs sm:text-sm text-[#A89186]">Cargando usuarios...</div>
       ) : couples.length === 0 ? (
-        <div style={{
-          backgroundColor: '#2A080D',
-          borderRadius: 18,
-          padding: 60,
-          textAlign: 'center',
-          border: '1px solid rgba(212,175,90,0.2)'
-        }}>
-          <p style={{ fontSize: 40, marginBottom: 12 }}>♡</p>
-          <p style={{ color: '#EFE5D8', fontSize: 16, fontWeight: 700 }}>No hay parejas registradas</p>
-          <p style={{ color: '#A89186', fontSize: 13, marginTop: 4 }}>
-            Haz clic en "Habilitar Nuevo Usuario" para crear las primeras credenciales.
+        <div className="bg-[#2A080D] rounded-2xl p-8 sm:p-14 text-center border border-[#D4AF5A]/20">
+          <p className="text-4xl mb-3">♡</p>
+          <p className="text-base font-bold text-[#EFE5D8]">No hay parejas registradas</p>
+          <p className="text-xs text-[#A89186] mt-1 max-w-md mx-auto">
+            Haz clic en &quot;Habilitar Nuevo Usuario&quot; para crear las primeras credenciales.
           </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="flex flex-col gap-3 sm:gap-4">
           {couples.map(c => {
             const st = stats[c.id] || { notifications: 0, chats: 0, memories: 0, plans: 0 }
             const isPending =
@@ -228,176 +212,92 @@ export default function CouplesPage() {
             return (
               <div
                 key={c.id}
-                style={{
-                  backgroundColor: '#2A080D',
-                  border: '1px solid rgba(212,175,90,0.25)',
-                  borderRadius: 18,
-                  padding: '22px 26px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 24,
-                  flexWrap: 'wrap',
-                }}
+                className="bg-[#2A080D] border border-[#D4AF5A]/25 rounded-2xl p-4 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-sm"
               >
                 {/* Info Principal */}
-                <div style={{ flex: 1.2, minWidth: 260 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                    <h2 style={{ fontSize: 17, fontWeight: 800, color: '#F7EFE4' }}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <h2 className="text-base sm:text-lg font-black text-[#F7EFE4] truncate">
                       {c.couple_names}
                     </h2>
                     <span
-                      style={{
-                        fontSize: 9,
-                        fontWeight: 700,
-                        padding: '3px 10px',
-                        borderRadius: 20,
-                        backgroundColor: isPending ? 'rgba(224,108,117,0.15)' : 'rgba(74,222,128,0.15)',
-                        color: isPending ? '#E06C75' : '#4ade80',
-                        border: `1px solid ${isPending ? 'rgba(224,108,117,0.3)' : 'rgba(74,222,128,0.3)'}`,
-                      }}
+                      className={`text-[9.5px] font-bold px-2.5 py-0.5 rounded-full border ${
+                        isPending
+                          ? 'bg-[#E06C75]/15 text-[#E06C75] border-[#E06C75]/30'
+                          : 'bg-[#4ade80]/15 text-[#4ade80] border-[#4ade80]/30'
+                      }`}
                     >
                       {isPending ? '⏳ Esperando a Pareja 2' : `✓ Vinculado con ${c.partner_two}`}
                     </span>
                   </div>
 
                   {/* Credenciales de Acceso */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      marginTop: 8,
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <div style={{
-                      backgroundColor: '#190407',
-                      padding: '5px 10px',
-                      borderRadius: 8,
-                      border: '1px solid rgba(212,175,90,0.2)',
-                      fontSize: 11,
-                      color: '#C7B7A3',
-                    }}>
-                      <span style={{ color: '#A89186' }}>Usuario: </span>
-                      <strong style={{ color: '#F3E5AB' }}>@{c.username}</strong>
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <div className="bg-[#190407] px-2.5 py-1.5 rounded-lg border border-[#D4AF5A]/20 text-[#C7B7A3]">
+                      <span className="text-[#A89186]">Usuario: </span>
+                      <strong className="text-[#F3E5AB]">@{c.username}</strong>
                     </div>
 
-                    <div style={{
-                      backgroundColor: '#190407',
-                      padding: '5px 10px',
-                      borderRadius: 8,
-                      border: '1px solid rgba(212,175,90,0.2)',
-                      fontSize: 11,
-                      color: '#C7B7A3',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}>
-                      <span style={{ color: '#A89186' }}>Clave: </span>
-                      <strong style={{ color: '#F3E5AB', fontFamily: 'monospace' }}>
+                    <div className="bg-[#190407] px-2.5 py-1.5 rounded-lg border border-[#D4AF5A]/20 text-[#C7B7A3] flex items-center gap-2">
+                      <span className="text-[#A89186]">Clave: </span>
+                      <strong className="text-[#F3E5AB] font-mono">
                         {showPass ? c.password : '••••••••'}
                       </strong>
                       <button
                         onClick={() => toggleShowPassword(c.id)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#D4AF5A',
-                          cursor: 'pointer',
-                          fontSize: 11,
-                          padding: 0,
-                          marginLeft: 2,
-                        }}
+                        className="text-[#D4AF5A] text-[11px] font-bold hover:underline"
                       >
                         {showPass ? 'Ocultar' : 'Ver'}
                       </button>
                     </div>
 
-                    {/* Código de Vinculación */}
-                    <div style={{
-                      backgroundColor: 'rgba(212,175,90,0.12)',
-                      padding: '5px 10px',
-                      borderRadius: 8,
-                      border: '1px solid rgba(212,175,90,0.4)',
-                      fontSize: 11,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}>
-                      <span style={{ color: '#D4AF5A', fontWeight: 700 }}>Código Pareja: </span>
-                      <strong style={{ color: '#F7EFE4', letterSpacing: 1 }}>{c.couple_code}</strong>
+                    <div className="bg-[#D4AF5A]/15 px-2.5 py-1.5 rounded-lg border border-[#D4AF5A]/40 text-xs flex items-center gap-2">
+                      <span className="text-[#D4AF5A] font-bold">Código: </span>
+                      <strong className="text-[#F7EFE4] tracking-wider">{c.couple_code}</strong>
                       <button
                         onClick={() => copyToClipboard(c.couple_code, c.id)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#D4AF5A',
-                          cursor: 'pointer',
-                          fontSize: 11,
-                          padding: 0,
-                          fontWeight: 700,
-                        }}
+                        className="text-[#D4AF5A] font-extrabold hover:underline"
                       >
                         {copiedCode === c.id ? '✓ Copiado' : '📋 Copiar'}
                       </button>
                     </div>
                   </div>
 
-                  <p style={{ fontSize: 11, color: '#A89186', marginTop: 10 }}>
-                    Titular: <span style={{ color: '#EFE5D8' }}>{c.partner_one}</span> &nbsp;•&nbsp; 
-                    Pareja 2: <span style={{ color: '#EFE5D8' }}>{c.partner_two || 'Sin vincular'}</span> &nbsp;•&nbsp;
-                    Desde {c.anniversary_date} &nbsp;•&nbsp; {c.plan_tier}
+                  <p className="text-[11px] text-[#A89186] mt-2.5">
+                    Titular: <span className="text-[#EFE5D8] font-semibold">{c.partner_one}</span> • Pareja 2: <span className="text-[#EFE5D8] font-semibold">{c.partner_two || 'Sin vincular'}</span> • {c.plan_tier}
                   </p>
                 </div>
 
                 {/* Métricas / Stats de Actividad */}
-                <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                <div className="grid grid-cols-4 sm:flex items-center gap-2 sm:gap-4 py-2 border-y lg:border-y-0 border-[#D4AF5A]/15">
                   {[
-                    { label: '🔔 Notifs', value: st.notifications, color: '#F3E5AB' },
-                    { label: '💬 Chats', value: st.chats, color: '#D4AF5A' },
-                    { label: '✦ Recuerdos', value: st.memories, color: '#C7B7A3' },
-                    { label: '✎ Planes', value: st.plans, color: '#D4AF5A' },
+                    { label: 'Notifs', value: st.notifications, color: '#F3E5AB', icon: '🔔' },
+                    { label: 'Chats', value: st.chats, color: '#D4AF5A', icon: '💬' },
+                    { label: 'Recuerdos', value: st.memories, color: '#C7B7A3', icon: '✦' },
+                    { label: 'Planes', value: st.plans, color: '#D4AF5A', icon: '✎' },
                   ].map(stat => (
-                    <div key={stat.label} style={{ textAlign: 'center', minWidth: 54 }}>
-                      <p style={{ fontSize: 20, fontWeight: 900, color: stat.color, lineHeight: 1 }}>
+                    <div key={stat.label} className="text-center px-1">
+                      <p className="text-base sm:text-xl font-black leading-tight" style={{ color: stat.color }}>
                         {stat.value}
                       </p>
-                      <p style={{ fontSize: 10, color: '#A89186', marginTop: 3 }}>{stat.label}</p>
+                      <p className="text-[9.5px] text-[#A89186] mt-0.5 truncate">{stat.icon} {stat.label}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Acciones */}
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div className="flex items-center gap-2 self-end lg:self-center shrink-0">
                   <button
                     onClick={() => openEditModal(c)}
-                    style={{
-                      backgroundColor: '#4D141C',
-                      border: '1px solid rgba(212,175,90,0.3)',
-                      color: '#F3E5AB',
-                      padding: '8px 14px',
-                      borderRadius: 10,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
+                    className="bg-[#4D141C] border border-[#D4AF5A]/30 text-[#F3E5AB] px-3.5 py-1.5 rounded-xl text-xs font-bold hover:bg-[#6D2932] transition-colors"
                   >
                     ✎ Editar
                   </button>
                   <button
                     onClick={() => handleDelete(c.id, c.couple_names)}
-                    style={{
-                      backgroundColor: 'rgba(224,108,117,0.15)',
-                      border: '1px solid rgba(224,108,117,0.3)',
-                      color: '#E06C75',
-                      padding: '8px 12px',
-                      borderRadius: 10,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
+                    className="bg-[#E06C75]/15 border border-[#E06C75]/30 text-[#E06C75] px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-[#E06C75]/25 transition-colors"
                   >
-                    ✕
+                    ✕ Eliminar
                   </button>
                 </div>
               </div>
@@ -408,109 +308,98 @@ export default function CouplesPage() {
 
       {/* MODAL CREAR / EDITAR */}
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(18, 3, 5, 0.85)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 9999,
-          padding: 20,
-        }}>
-          <div style={{
-            backgroundColor: '#2A080D',
-            border: '1.5px solid #D4AF5A',
-            borderRadius: 20,
-            padding: 30,
-            width: '100%',
-            maxWidth: 520,
-            boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-6">
+          <div className="bg-[#2A080D] border border-[#D4AF5A]/60 rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="flex justify-between items-center p-4 sm:p-5 border-b border-[#D4AF5A]/20 bg-[#190407]">
               <div>
-                <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.5, color: '#D4AF5A' }}>
+                <p className="text-[9px] font-extrabold tracking-widest text-[#D4AF5A] uppercase">
                   {isEditing ? 'MODIFICAR CUENTA' : 'CREAR NUEVO ACCESO'}
                 </p>
-                <h2 style={{ fontSize: 20, fontWeight: 900, color: '#F7EFE4', marginTop: 2 }}>
+                <h2 className="text-lg sm:text-xl font-black text-[#F7EFE4] mt-0.5">
                   {isEditing ? 'Editar Pareja' : 'Habilitar Nueva Pareja'}
                 </h2>
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                style={{ background: 'none', border: 'none', color: '#A89186', fontSize: 20, cursor: 'pointer' }}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#2A080D] text-[#A89186] hover:text-[#F7EFE4] text-sm"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6 overflow-y-auto space-y-3.5 flex-1">
               {/* Usuario y Contraseña */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label style={labelStyle}>USUARIO (LOGIN) *</label>
+                  <label className="text-[9.5px] font-extrabold tracking-wider text-[#D4AF5A] uppercase block mb-1">
+                    USUARIO (LOGIN) *
+                  </label>
                   <input
                     type="text"
                     required
                     value={formData.username}
                     onChange={e => setFormData({ ...formData, username: e.target.value })}
                     placeholder="ej. juan.vip"
-                    style={inputStyle}
+                    className="w-full bg-[#190407] border border-[#D4AF5A]/30 rounded-xl px-3 py-2 text-xs sm:text-sm text-[#F7EFE4] outline-none"
                   />
                 </div>
                 <div>
-                  <label style={labelStyle}>CONTRASEÑA *</label>
+                  <label className="text-[9.5px] font-extrabold tracking-wider text-[#D4AF5A] uppercase block mb-1">
+                    CONTRASEÑA *
+                  </label>
                   <input
                     type="text"
                     required
                     value={formData.password}
                     onChange={e => setFormData({ ...formData, password: e.target.value })}
                     placeholder="ej. Secreto2026"
-                    style={inputStyle}
+                    className="w-full bg-[#190407] border border-[#D4AF5A]/30 rounded-xl px-3 py-2 text-xs sm:text-sm text-[#F7EFE4] outline-none"
                   />
                 </div>
               </div>
 
               {/* Titular y Pareja */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label style={labelStyle}>TITULAR (PAREJA 1) *</label>
+                  <label className="text-[9.5px] font-extrabold tracking-wider text-[#D4AF5A] uppercase block mb-1">
+                    TITULAR (PAREJA 1) *
+                  </label>
                   <input
                     type="text"
                     required
                     value={formData.partner_one}
                     onChange={e => setFormData({ ...formData, partner_one: e.target.value })}
                     placeholder="ej. Juan"
-                    style={inputStyle}
+                    className="w-full bg-[#190407] border border-[#D4AF5A]/30 rounded-xl px-3 py-2 text-xs sm:text-sm text-[#F7EFE4] outline-none"
                   />
                 </div>
                 <div>
-                  <label style={labelStyle}>PAREJA 2 (OPCIONAL O SE VINCULA DESPUÉS)</label>
+                  <label className="text-[9.5px] font-extrabold tracking-wider text-[#D4AF5A] uppercase block mb-1">
+                    PAREJA 2 (OPCIONAL O VINCULAR LUEGO)
+                  </label>
                   <input
                     type="text"
                     value={formData.partner_two}
                     onChange={e => setFormData({ ...formData, partner_two: e.target.value })}
                     placeholder="ej. Pendiente o María"
-                    style={inputStyle}
+                    className="w-full bg-[#190407] border border-[#D4AF5A]/30 rounded-xl px-3 py-2 text-xs sm:text-sm text-[#F7EFE4] outline-none"
                   />
                 </div>
               </div>
 
               {/* Código de Vinculación */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label style={labelStyle}>CÓDIGO DE VINCULACIÓN PRIVADO</label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[9.5px] font-extrabold tracking-wider text-[#D4AF5A] uppercase">
+                    CÓDIGO DE VINCULACIÓN PRIVADO
+                  </label>
                   <button
                     type="button"
                     onClick={() => {
                       const newCode = `AMOR-${Math.floor(1000 + Math.random() * 9000)}`
                       setFormData({ ...formData, couple_code: newCode })
                     }}
-                    style={{ background: 'none', border: 'none', color: '#D4AF5A', fontSize: 10, cursor: 'pointer', fontWeight: 700 }}
+                    className="text-[#D4AF5A] text-[10px] font-bold hover:underline"
                   >
                     ↻ Generar otro
                   </button>
@@ -520,30 +409,34 @@ export default function CouplesPage() {
                   value={formData.couple_code}
                   onChange={e => setFormData({ ...formData, couple_code: e.target.value.toUpperCase() })}
                   placeholder="AMOR-1234"
-                  style={{ ...inputStyle, fontWeight: 'bold', letterSpacing: 2, color: '#D4AF5A' }}
+                  className="w-full bg-[#190407] border border-[#D4AF5A]/40 rounded-xl px-3 py-2 text-sm font-extrabold text-[#D4AF5A] tracking-widest outline-none"
                 />
-                <p style={{ fontSize: 10, color: '#A89186', marginTop: 4 }}>
+                <p className="text-[10px] text-[#A89186] mt-1">
                   Este es el código que el titular le da a su pareja para conectarse desde su propio teléfono.
                 </p>
               </div>
 
               {/* Fecha de Aniversario y Plan */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label style={labelStyle}>FECHA DE ANIVERSARIO</label>
+                  <label className="text-[9.5px] font-extrabold tracking-wider text-[#D4AF5A] uppercase block mb-1">
+                    FECHA DE ANIVERSARIO
+                  </label>
                   <input
                     type="date"
                     value={formData.anniversary_date}
                     onChange={e => setFormData({ ...formData, anniversary_date: e.target.value })}
-                    style={inputStyle}
+                    className="w-full bg-[#190407] border border-[#D4AF5A]/30 rounded-xl px-3 py-2 text-xs sm:text-sm text-[#F7EFE4] outline-none"
                   />
                 </div>
                 <div>
-                  <label style={labelStyle}>TIPO DE PLAN</label>
+                  <label className="text-[9.5px] font-extrabold tracking-wider text-[#D4AF5A] uppercase block mb-1">
+                    TIPO DE PLAN
+                  </label>
                   <select
                     value={formData.plan_tier}
                     onChange={e => setFormData({ ...formData, plan_tier: e.target.value })}
-                    style={{ ...inputStyle, cursor: 'pointer' }}
+                    className="w-full bg-[#190407] border border-[#D4AF5A]/30 rounded-xl px-3 py-2 text-xs sm:text-sm text-[#F7EFE4] outline-none cursor-pointer"
                   >
                     <option value="Edición Dorada Exclusiva">Edición Dorada Exclusiva</option>
                     <option value="Acceso Pareja VIP">Acceso Pareja VIP</option>
@@ -553,36 +446,18 @@ export default function CouplesPage() {
               </div>
 
               {/* Botones de Acción */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 14 }}>
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#D4AF5A]/20">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  style={{
-                    backgroundColor: 'transparent',
-                    border: '1px solid rgba(212,175,90,0.3)',
-                    color: '#C7B7A3',
-                    borderRadius: 10,
-                    padding: '10px 18px',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
+                  className="px-4 py-2 rounded-xl border border-[#D4AF5A]/30 text-[#C7B7A3] text-xs font-bold hover:bg-[#190407]"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  style={{
-                    backgroundColor: '#D4AF5A',
-                    color: '#190407',
-                    border: 'none',
-                    borderRadius: 10,
-                    padding: '10px 22px',
-                    fontSize: 12,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
+                  className="px-5 py-2 rounded-xl bg-[#D4AF5A] text-[#190407] text-xs font-black hover:bg-[#F3E5AB] disabled:opacity-50 transition-colors"
                 >
                   {submitting ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Crear y Habilitar'}
                 </button>
@@ -593,25 +468,4 @@ export default function CouplesPage() {
       )}
     </div>
   )
-}
-
-const labelStyle: React.CSSProperties = {
-  fontSize: 9,
-  fontWeight: 800,
-  letterSpacing: 1.2,
-  color: '#D4AF5A',
-  marginBottom: 4,
-  display: 'block',
-}
-
-const inputStyle: React.CSSProperties = {
-  backgroundColor: '#190407',
-  border: '1px solid rgba(212,175,90,0.3)',
-  borderRadius: 8,
-  padding: '8px 12px',
-  color: '#F7EFE4',
-  fontSize: 13,
-  width: '100%',
-  outline: 'none',
-  boxSizing: 'border-box',
 }
