@@ -295,11 +295,9 @@ export default function LocationPage() {
                       <p style={{ fontSize: 12, fontWeight: 700, color: '#F7EFE4' }}>
                         📍 {loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)}
                       </p>
-                      {session?.isAdmin && (
-                        <p style={{ fontSize: 10, color: '#D4AF5A', marginTop: 2 }}>
-                          {loc.couples?.couple_names}
-                        </p>
-                      )}
+                      <p style={{ fontSize: 10, color: '#D4AF5A', marginTop: 2 }}>
+                        {loc.couples?.couple_names} • Celular de {loc.couples?.partner_two || 'Pareja'}
+                      </p>
                       <p style={{ fontSize: 10, color: '#6D2932', marginTop: 2 }}>
                         {formatDate(loc.recorded_at)}
                       </p>
