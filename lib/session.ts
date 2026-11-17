@@ -14,8 +14,8 @@ const COOKIE_NAME = 'complices_session'
 
 // ─── Credenciales del super-administrador ─────────────────────────────────────
 // Cambia estas antes de publicar en producción
-export const ADMIN_USERNAME = 'superadmin'
-export const ADMIN_PASSWORD = 'Complices2026'
+export const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'superadmin'
+export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Complices2026'
 
 export async function getSession(): Promise<Session | null> {
   try {

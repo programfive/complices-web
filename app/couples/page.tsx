@@ -32,7 +32,7 @@ export default function CouplesPage() {
     partner_two: '',
     couple_names: '',
     couple_code: '',
-    anniversary_date: new Date().toISOString().split('T')[0],
+    anniversary_date: '',
     plan_tier: 'Edición Dorada Exclusiva',
   })
   const [submitting, setSubmitting] = useState(false)
@@ -88,7 +88,7 @@ export default function CouplesPage() {
       partner_two: '',
       couple_names: '',
       couple_code: randomCode,
-      anniversary_date: new Date().toISOString().split('T')[0],
+      anniversary_date: '',
       plan_tier: 'Edición Dorada Exclusiva',
     })
     setShowModal(true)
